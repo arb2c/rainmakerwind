@@ -1,9 +1,9 @@
-function analyze_fin2, flight, psi_correct, fin, ahrs, wind, noplot=noplot, tas_correct=tas_correct
+function analyze_fin2, flight, psi_correct, fin, ahrs, wind, noplot=noplot, pitot_correct=pitot_correct
 ;This version reads data straight from the RainmakerData files
 
 IF n_elements(flight) eq 0 THEN flight=3
 IF n_elements(psi_correct) eq 0 THEN psi_correct=0  ;test a correction, degrees
-IF n_elements(tas_correct) eq 0 THEN tas_correct=1.0  ;tas correction, mulitplication factor
+IF n_elements(pitot_correct) eq 0 THEN pitot_correct=1.0  ;pitot correction, mulitplication factor
 IF n_elements(noplot) eq 0 THEN noplot=0
 
 ;Read in data
@@ -13,6 +13,7 @@ IF n_elements(fin) eq 0 THEN BEGIN  ;Line to avoid re-reading if data already ex
       2:fn='RainmakerData_2016_11_21_09_07_04.csv'
       3:fn='RainmakerData_2016_11_21_09_47_27.csv'
       4:fn='RainmakerData_2017_01_20_12_34_12.csv'
+      5:fn='RainmakerData_2017_02_07_08_49_19.csv'
    ENDCASE
 
    fin=read_rainmaker(fn, 'fin', units=finunits)
@@ -61,16 +62,16 @@ gamma=1.40     ;cp/cv specific heat ratio, this is 'kappa' sometimes
 
 ;Note: Moist air corrections also possible, generally <1% change in TAS, neglect for now.
 
-q=fin.pitot_pres   ;This is actually pitot-static, q in Lenschow
+q=fin.pitot_pres * pitot_correct  ;This is actually pitot-static, q in Lenschow
 ps=fin.static_pres
-pt=q+fin.static_pres
+pt=(q+fin.static_pres)
 tr=fin.amb_temp + 273.15
 recov=1.0  ;Lets assume unity for now
 
 ;Compute TAS, matches RainMaker exactly
 m2= 2/(gamma-1) * ((pt/ps)^((gamma-1)/gamma) - 1)           ;Mach number (squared)
 tas_sq= gamma*rconst*m2*tr / (recov * (gamma-1)/2 * m2 +1)  ;Eq B.10 in TechNote 23
-tas= sqrt(tas_sq) * tas_correct
+tas= sqrt(tas_sq)             ; * tas_correct
 
 ;Compute wind, use RainMaker calculations of aircraft attitude first
 time=fin.time
@@ -215,5 +216,5 @@ ENDIF
 
 return,{mean_wind:mean_wind, mean_heading:mean_heading, mean_course:mean_course, corr:corr, udl:udl, vdl:vdl, up:up, vp:vp, $
           course:course, truehead:psi*180/!pi, udl_all:up[good] * uwind3_sm[good], vdl_all:vp[good] * vwind3_sm[good],$
-            tas:tas, tgs:tgs, wspd:wspd, wdir:wdir, wind_std:wind_std, wdir_std:wdir_std}
+            tas:tas, tgs:tgs, wspd:wspd, wdir:wdir, wind_std:wind_std, wdir_std:wdir_std, lat:lat, lon:lon}
 END
