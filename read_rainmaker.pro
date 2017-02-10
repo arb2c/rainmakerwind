@@ -43,7 +43,7 @@ FUNCTION read_rainmaker, fn, id, units=units
          v[0]=sfm
          v[1]=0.0
          IF checksum eq 1 THEN v[-1]=checkval
-         all[i,*]=v
+         all[i,*]=v[0:n_elements(units)-1]
          i=i+1
       ENDIF
    ENDREP UNTIL eof(1)
@@ -63,6 +63,7 @@ FUNCTION read_rainmaker, fn, id, units=units
       IF units[i] eq 'TAS (kts)' THEN tagname='TAS_knots'
       IF units[i] eq 'P-ALT (ft)' THEN tagname='palt_ft'
       IF units[i] eq 'Time(msec)' THEN tagname='time_milliseconds'
+      IF units[i] eq 'not used' THEN tagname='notused'
       IF (strmid(tagname,0,1) eq '2') or (strmid(tagname,0,1) eq '8') THEN tagname='x'+tagname
       IF total(strupcase(tagname) eq tag_names(x)) gt 0 THEN tagname=tagname+'_2'
       x=create_struct(x, tagname, reform(all[*,i]))

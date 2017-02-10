@@ -5,6 +5,7 @@ IF n_elements(flight) eq 0 THEN flight=3
 IF n_elements(psi_correct) eq 0 THEN psi_correct=0  ;test a correction, degrees
 IF n_elements(pitot_correct) eq 0 THEN pitot_correct=1.0  ;pitot correction, mulitplication factor
 IF n_elements(noplot) eq 0 THEN noplot=0
+IF !version.release ge 8 THEN nan=1 ELSE nan=0  ;Workaround since GDL doesn't do NaN in smooth operation
 
 ;Read in data
 IF n_elements(fin) eq 0 THEN BEGIN  ;Line to avoid re-reading if data already exists
@@ -128,26 +129,26 @@ vwind = vp -tas*d * (cos(psi)*cos(theta) + tan(beta)*(sin(psi)*cos(phi) - cos(ps
 uwind2 = up - tas*sin(psi+beta)
 vwind2 = vp - tas*cos(psi+beta)
 
-uwind_sm=smooth(uwind,5)
-vwind_sm=smooth(vwind,5)
+uwind_sm=smooth(uwind,5,nan=nan)
+vwind_sm=smooth(vwind,5,nan=nan)
 wspd=sqrt(uwind_sm^2 + vwind_sm^2)
 wdir=atan(-uwind_sm, -vwind_sm) * 180/!pi
 bad=where(wdir lt 0, nbad)       ;Get range to 0:360, rather than -180:180
 IF nbad gt 0 THEN wdir[bad] = wdir[bad]+360
 
-uwind2_sm=smooth(uwind2,5)
-vwind2_sm=smooth(vwind2,5)
+uwind2_sm=smooth(uwind2,5,nan=nan)
+vwind2_sm=smooth(vwind2,5,nan=nan)
 wspd2=sqrt(uwind2_sm^2 + vwind2_sm^2)
 wdir2=atan(-uwind2_sm, -vwind2_sm) * 180/!pi
 bad=where(wdir2 lt 0, nbad)       ;Get range to 0:360, rather than -180:180
 IF nbad gt 0 THEN wdir2[bad] = wdir2[bad]+360
-
+ 
 ;My own simple derivation, using difference between tas and groundspeed
 psi=(extra.heading+psi_correct) * !pi/180   ;true heading
 utas=tas*sin(psi)
 vtas=tas*cos(psi)
-uwind3_sm = smooth(up-utas,5)
-vwind3_sm = smooth(vp-vtas,5)
+uwind3_sm = smooth(up-utas,5,nan=nan)
+vwind3_sm = smooth(vp-vtas,5,nan=nan)
 wspd3=sqrt(uwind3_sm^2 + vwind3_sm^2)
 wdir3=atan(-uwind3_sm, -vwind3_sm) * 180/!pi
 bad=where(wdir3 lt 0, nbad)       ;Get range to 0:360, rather than -180:180
