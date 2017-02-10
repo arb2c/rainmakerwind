@@ -43,4 +43,4 @@ alllat=smooth(x.lat,150,/nan)
       cgoplot,alllon,alllat,color='blue',map=map,thick=2
 
 for i=1500,5000,200 do  wind_barb,x.wspd[i],x.wdir[i],alllon[i],alllat[i],size=0.001
-
+end
