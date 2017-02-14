@@ -41,6 +41,7 @@ IF n_elements(fin) eq 0 THEN BEGIN  ;Line to avoid re-reading if data already ex
          roll:interpol(vn300.roll, vn300.time, fin.time),$
          lat:interpol(vn300.lat, vn300.time, fin.time),$
          lon:interpol(vn300.long, vn300.time, fin.time),$
+         alt:interpol(vn300.altitude, vn300.time, fin.time),$
          velx:interpol(vn300.vel_x, vn300.time, fin.time),$
          vely:interpol(vn300.vel_y, vn300.time, fin.time)}
          
@@ -227,5 +228,5 @@ ENDIF
 return,{time:time, mean_wind:mean_wind, mean_heading:mean_heading, mean_course:mean_course, corr:corr, udl:udl, vdl:vdl, up:up, vp:vp, $
           course:course, truehead:psi*180/!pi, udl_all:up[good] * uwind3_sm[good], vdl_all:vp[good] * vwind3_sm[good],$
             tas:tas, tgs:tgs, wspd:wspd, wdir:wdir, wind_std:wind_std, wdir_std:wdir_std, lat:lat, lon:lon, uwind:uwind, vwind:vwind, $
-            aoa:fin.aoa_deg, ss:fin.x24v_monitorextra:extra}
+            aoa:fin.aoa_deg, ss:fin.x24v_monitor, extra:extra, fin:fin, gps:gps}
 END
