@@ -16,7 +16,7 @@ FUNCTION read_rainmaker, fn, id, units=units
    ENDREP UNTIL (strlowcase(v[0]) eq strlowcase(id)) or (eof(1) eq 1)
    IF eof(1) eq 1 THEN BEGIN
       print,'ID: '+id+', no field information found. Returning.'
-      return,-1
+      return,{ioerror:1}
    ENDIF
    units=v
    units[0]='time'   ;In the field string this is just component name
@@ -50,7 +50,7 @@ FUNCTION read_rainmaker, fn, id, units=units
    close,1
    IF i eq 0 THEN BEGIN
       print,'ID: '+id+', no data found. Returning.'
-      return,-1
+      return,{ioerror:1}
    END
    all=all[0:i-1,*]   ;Truncate to size
 
@@ -68,5 +68,6 @@ FUNCTION read_rainmaker, fn, id, units=units
       IF total(strupcase(tagname) eq tag_names(x)) gt 0 THEN tagname=tagname+'_2'
       x=create_struct(x, tagname, reform(all[*,i]))
    ENDFOR
+   x=create_struct(x, 'ioerror', 0)
    return,x
 END

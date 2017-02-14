@@ -24,7 +24,7 @@ IF n_elements(fin) eq 0 THEN BEGIN  ;Line to avoid re-reading if data already ex
    vn300=read_rainmaker(fn, 'vn300', units=gpsunits)
    
    ;Some code to workaround data with vn300 instead of gps and ahrs
-   IF n_elements(tag_names(vn300)) gt 0 THEN BEGIN
+   IF vn300.ioerror eq 0 THEN BEGIN
       ;Do a proper interpolation of yaw angle, by 'unwinding' the direction to avoid rollovers
       yaw=vn300.yaw
       dyaw=yaw[1:*]-yaw
@@ -46,7 +46,16 @@ IF n_elements(fin) eq 0 THEN BEGIN  ;Line to avoid re-reading if data already ex
          
       bad=where(extra.heading lt 0, nbad)       ;Get range to 0:360, rather than -180:180
       IF nbad gt 0 THEN extra.heading[bad] = extra.heading[bad]+360
-   ENDIF
+   ENDIF ELSE BEGIN
+      extra={time:fin.time, $
+         heading:interpol(ahrs.mag_head, ahrs.time, fin.time),$
+         pitch:interpol(ahrs.pitch, ahrs.time, fin.time),$
+         roll:interpol(ahrs.roll, ahrs.time, fin.time),$
+         lat:interpol(gps.lat, gps.time, fin.time),$
+         lon:interpol(gps.lon, gps.time, fin.time),$
+         velx:interpol(gps.vel_x, gps.time, fin.time),$
+         vely:interpol(gps.vel_y, gps.time, fin.time)}
+   ENDELSE
    
    ;Data cleanup
    bad=where(extra.lat eq 0, nbad)
@@ -100,8 +109,8 @@ mpd=111325.0  ;m per degree latitude at equator
 up=mpd*(lon[1:*]-lon)/dt * cos(lat*!pi/180) 
 vp=mpd*(lat[1:*]-lat)/dt
 
-print,'***UP and VP override until GPS is fixed ***'
-IF n_elements(tag_names(vn300)) gt 0 THEN BEGIN
+IF vn300.ioerror eq 0 THEN BEGIN
+   print,'***UP and VP override until GPS is fixed ***'
    upold=up
    vpold=vp
    ;NOTE up and vp are backwards in the VN300 data
@@ -217,5 +226,6 @@ ENDIF
 
 return,{time:time, mean_wind:mean_wind, mean_heading:mean_heading, mean_course:mean_course, corr:corr, udl:udl, vdl:vdl, up:up, vp:vp, $
           course:course, truehead:psi*180/!pi, udl_all:up[good] * uwind3_sm[good], vdl_all:vp[good] * vwind3_sm[good],$
-            tas:tas, tgs:tgs, wspd:wspd, wdir:wdir, wind_std:wind_std, wdir_std:wdir_std, lat:lat, lon:lon, uwind:uwind, vwind:vwind}
+            tas:tas, tgs:tgs, wspd:wspd, wdir:wdir, wind_std:wind_std, wdir_std:wdir_std, lat:lat, lon:lon, uwind:uwind, vwind:vwind, $
+            aoa:fin.aoa_deg, ss:fin.x24v_monitorextra:extra}
 END
