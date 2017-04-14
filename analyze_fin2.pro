@@ -15,6 +15,7 @@ IF n_elements(fin) eq 0 THEN BEGIN  ;Line to avoid re-reading if data already ex
       3:fn='RainmakerData_2016_11_21_09_47_27.csv'
       4:fn='RainmakerData_2017_01_20_12_34_12.csv'
       5:fn='RainmakerData_2017_02_07_08_49_19.csv'
+      6:fn='RainmakerData_2017_03_14_10_29_39.csv'
    ENDCASE
 
    fin=read_rainmaker(fn, 'fin', units=finunits)
@@ -227,5 +228,5 @@ ENDIF
 return,{time:time, mean_wind:mean_wind, mean_heading:mean_heading, mean_course:mean_course, corr:corr, udl:udl, vdl:vdl, up:up, vp:vp, $
           course:course, truehead:psi*180/!pi, udl_all:up[good] * uwind3_sm[good], vdl_all:vp[good] * vwind3_sm[good],$
             tas:tas, tgs:tgs, wspd:wspd, wdir:wdir, wind_std:wind_std, wdir_std:wdir_std, lat:lat, lon:lon, uwind:uwind, vwind:vwind, $
-            aoa:fin.aoa_deg, ss:fin.x24v_monitorextra:extra}
+            aoa:fin.aoa_deg, ss:fin.x24v_monitor, extra:extra}
 END

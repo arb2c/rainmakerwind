@@ -22,7 +22,7 @@ FUNCTION read_rainmaker, fn, id, units=units
    units[0]='time'   ;In the field string this is just component name
    units[1]='id'     ;This is unnamed in the files
 
-   REPEAT readf,1,s UNTIL s eq '******'  ;Data start indicator
+   REPEAT readf,1,s UNTIL (s eq '******') or (strmid(s,0,2) eq '20')  ;Data start indicator
 
    ;Read in everything else
 
@@ -57,16 +57,28 @@ FUNCTION read_rainmaker, fn, id, units=units
    ;Make a structure
    x={time:reform(all[*,0])}
    FOR i=1,n_elements(units)-1 DO BEGIN
-      tagname=strlowcase((str_sep(units[i],' '))[0]) ;Select first word
+      tagname=strlowcase((str_sep(strcompress(units[i],/remove),' '))[0]) ;Select first word
       tagname=strjoin(str_sep(tagname,'-'))  ;Get rid of dashes
+      tagname=strjoin(str_sep(tagname,'('))  ;Get rid of left paren
+      tagname=strjoin(str_sep(tagname,')'))  ;Get rid of right paren
+      tagname=strjoin(str_sep(tagname,'['))  ;Get rid of left bracket
+      tagname=strjoin(str_sep(tagname,']'))  ;Get rid of right bracket
+      tagname=strjoin(str_sep(tagname,'/'))  ;Get rid of slash
+      tagname=strjoin(str_sep(tagname,'^'))  ;Get rid of carat
+      tagname=strjoin(str_sep(tagname,'%'))  ;Get rid of percent
+      tagname=strjoin(str_sep(tagname,'?'))  ;Get rid of questionmark
+      tagname=strjoin(str_sep(tagname,'******'))  ;Get rid of stars
       IF units[i] eq 'TAS (m/s)' THEN tagname='TAS'     ;Special cases
       IF units[i] eq 'TAS (kts)' THEN tagname='TAS_knots'
       IF units[i] eq 'P-ALT (ft)' THEN tagname='palt_ft'
       IF units[i] eq 'Time(msec)' THEN tagname='time_milliseconds'
       IF units[i] eq 'not used' THEN tagname='notused'
       IF (strmid(tagname,0,1) eq '2') or (strmid(tagname,0,1) eq '8') THEN tagname='x'+tagname
-      IF total(strupcase(tagname) eq tag_names(x)) gt 0 THEN tagname=tagname+'_2'
-      x=create_struct(x, tagname, reform(all[*,i]))
+      IF total(strupcase(tagname) eq tag_names(x)) gt 0 THEN tagname=tagname+'_ii'
+      IF total(strupcase(tagname) eq tag_names(x)) gt 0 THEN tagname=tagname+'i'
+      IF total(strupcase(tagname) eq tag_names(x)) gt 0 THEN tagname=tagname+'i'
+      IF total(strupcase(tagname) eq tag_names(x)) gt 0 THEN tagname=tagname+'i'
+      IF strlen(tagname) gt 0 THEN x=create_struct(x, tagname, reform(all[*,i]))
    ENDFOR
    x=create_struct(x, 'ioerror', 0)
    return,x
