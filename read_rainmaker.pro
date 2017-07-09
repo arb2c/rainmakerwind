@@ -27,6 +27,7 @@ FUNCTION read_rainmaker, fn, id, units=units
    ;Read in everything else
 
    all=dblarr(1000000,n_elements(units))
+   ;Comment out checksum, not using it and trailing comma in the string is causing errors (v[-1]) doesn't work.
    IF units[n_elements(units)-1] eq 'CS' THEN checksum=1 ELSE checksum=0  ;Flag for checksum in use
    i=0L
    REPEAT BEGIN
@@ -37,12 +38,12 @@ FUNCTION read_rainmaker, fn, id, units=units
          hms=str_sep(timestamp,'_')
          sfm=hms[3]*3600d + hms[4]*60d + hms[5]
          IF i eq 0 THEN date=hms[0]+hms[1]+hms[2]
-         IF checksum eq 1 THEN reads, v[-1], checkval, format='(Z)'  ;Klugey way to convert hex to decimal
-         
+         ;IF checksum eq 1 THEN reads, v[-1], checkval, format='(Z)'  ;Klugey way to convert hex to decimal
+      
          ;Set the two string fields to floats before stuffing 'all' array
          v[0]=sfm
          v[1]=0.0
-         IF checksum eq 1 THEN v[-1]=checkval
+         ;IF checksum eq 1 THEN v[-1]=checkval
          all[i,*]=v[0:n_elements(units)-1]
          i=i+1
       ENDIF

@@ -17,4 +17,46 @@ for i=8,18 do begin &  x=analyze_fin2(5,0,/noplot,pitot=1+i/100.0) & print,1+i/1
 for i=-8,4 do begin &  x=analyze_fin2(5,i,/noplot,pitot=1.10) & print,i,stddev(x.wdir[1500:5000]) & endfor
 
 
+;=====================================================================
+;Flight 7 04/13/2017
+;I think this already has the 1.1 correction applied...  low winds so using wspd intead of wdir
+;Find pitot adjustment minimum, best= 1.12,
+for i=5,15 do begin &  x=analyze_fin2(7,0,/noplot,pitot=1+i/100.0) & print,1+i/100.0,stddev(x.wspd[2000:8000]) & endfor
+
+;Find heading adjustment minimum, best=-1
+for i=-8,4 do begin &  x=analyze_fin2(7,i,/noplot,pitot=1.12) & print,i,stddev(x.wspd[2000:8000]) & endfor
+
+
+;=====================================================================
+;Flight 9 06/05/2017
+
+for i=5,15 do begin &  x=analyze_fin2(9,0,/noplot,pitot=1+i/100.0) & print,1+i/100.0,stddev(x.wspd[3000:8000]) & endfor
+
+;Find heading adjustment minimum, best=-0.5
+for i=-8,8 do begin &  x=analyze_fin2(9,-1+i/10.0,/noplot,pitot=1.1) & print,i,stddev(x.wspd[3000:8000]) & endfor
+
+;=====================================================================
+;Flight 11 07/06/2017 full CWIP in China
+;points 3500-6500 nearly make a closed loop
+
+;Best = 1.09 with no heading offset.  1.06 when using -2.8 degree offset
+for i=5,15 do begin &  x=analyze_fin2(11,-2.8,/noplot,pitot=1+i/100.0) & print,1+i/100.0,stddev(x.wspd[3500:6600]) & endfor
+
+;Getting best adjustment at large value of -2.8 degrees
+for i=-20,-15 do begin &  x=analyze_fin2(11,-1+i/10.0,/noplot,pitot=1.09) & print,-1+i/10.0,stddev(x.wspd[3500:6600]) & endfor
+
+;=====================================================================
+;Flight 12 07/08/2017 full CWIP in China  - better flight than above
+;points 800-1400 altitude 3000m
+;points 1600-2800 altitude 3700m
+;points 400-3800 whole flight, best 1.03, -3.5 deg
+
+
+a=400 & b=3800
+;Best = 1.09 with no heading offset.  1.03 when using -2.8 degree offset
+for i=0,15 do begin &  x=analyze_fin2(12,-3.5,/noplot,pitot=1+i/100.0) & print,1+i/100.0,stddev(x.wspd[a:b]) & endfor
+
+;Getting best adjustment at large value of -3.5 degrees
+for i=-35,-15 do begin &  x=analyze_fin2(12,-1+i/10.0,/noplot,pitot=1.05) & print,-1+i/10.0,stddev(x.wspd[a:b]) & endfor
+
 

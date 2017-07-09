@@ -16,6 +16,12 @@ IF n_elements(fin) eq 0 THEN BEGIN  ;Line to avoid re-reading if data already ex
       4:fn='RainmakerData_2017_01_20_12_34_12.csv'
       5:fn='RainmakerData_2017_02_07_08_49_19.csv'
       6:fn='RainmakerData_2017_03_14_10_29_39.csv'
+      7:fn='CWIP-R03_20170413103016.csv'
+      8:fn='CWIP-R03_20170425085421.csv'
+      9:fn='CWIP-R03_20170605150952.csv'
+      10:fn='CWIP-R03_20170613095324.csv'
+      11:fn='CWIP-R03_20170706101755.csv'
+      12:fn='CWIP-R03_20170708180157.csv'
    ENDCASE
 
    fin=read_rainmaker(fn, 'fin', units=finunits)
@@ -23,6 +29,15 @@ IF n_elements(fin) eq 0 THEN BEGIN  ;Line to avoid re-reading if data already ex
    ahrs=read_rainmaker(fn, 'ahrs', units=windunits)
    gps=read_rainmaker(fn, 'gps', units=gpsunits)
    vn300=read_rainmaker(fn, 'vn300', units=gpsunits)
+   IF vn300.ioerror eq 1 THEN BEGIN
+      ;As of April 2017 this is new format with CWIP_WIND data, need to rename some fields
+      cwip=read_rainmaker(fn, 'cwip_wind', units=gpsunits)
+      vn300={time:cwip.time, pitch:cwip.pitchdeg, roll:cwip.rolldeg, yaw:cwip.yawdeg, lat:cwip.latdeg, long:cwip.londeg,$
+         altitude:cwip.gps_altm, vel_x:cwip.vel_xms, vel_y:cwip.vel_yms, ioerror:0}
+      tempfin={pitot_pres:fin.pitotdpmb, static_pres:fin.staticpressuremb , amb_temp:fin.ambienttemperaturec,$
+             aoa_deg:fin.attackangledeg, x24v_monitor:fin.sideslipangledeg}
+      fin=create_struct(fin, tempfin)
+   ENDIF
    
    ;Some code to workaround data with vn300 instead of gps and ahrs
    IF vn300.ioerror eq 0 THEN BEGIN
@@ -174,7 +189,7 @@ IF noplot eq 0 THEN BEGIN
    !p.charsize=1.5
    window,2,xsize=900,ysize=800
    etime_hires=fin.time-fin.time[0]
-   cgplot,etime,wspd,ytitle='Wind Speed (m/s)',xtitle='Elapsed Time (s)',/xstyle  ;Had wind.wspd here, but no longer computed
+   cgplot,etime,wspd,ytitle='Wind Speed (m/s)',xtitle='Elapsed Time (s)',/xstyle,yr=[0,25]  ;Had wind.wspd here, but no longer computed
    cgoplot,etime,wspd,color='red'
    cgoplot,etime,wspd2,color='green'
    cgoplot,etime,wspd3,color='blue'
@@ -184,7 +199,7 @@ IF noplot eq 0 THEN BEGIN
    cgoplot,etime,wdir2,color='green',psym=16,symsize=0.5
    cgoplot,etime,wdir3,color='blue',psym=16,symsize=0.5
 
-   cgplot,etime, tgs,title='TGS, TAS(red)',yr=[0,50],/xstyle
+   cgplot,etime, tgs,title='TGS, TAS(red)',yr=[0,80],/xstyle
    cgoplot,etime,tas,color=250
 
    cgplot, etime,course, title='Course, Mag_head(red)',/xstyle
@@ -209,13 +224,13 @@ IF noplot eq 0 THEN BEGIN
    window,3,xsize=900,ysize=800
    !p.multi=[0,1,3,0,0]
    !p.charsize=3
-   cgplot,etime,wspd,ytitle='Wind Speed (m/s)',xtitle='Elapsed Time (s)',color='red',yr=[0,20],/xstyle
+   cgplot,etime,wspd,ytitle='Wind Speed (m/s)',xtitle='Elapsed Time (s)',color='red',yr=[0,25],/xstyle
    cgoplot,etime,wspd2,color='green'
    cgoplot,etime,wspd3,color='blue'
    cgplot,etime,wdir,ytitle='Wind Direction (deg)',psym=16,symsize=0.5,xtitle='Elapsed Time (s)',color='red',/xstyle
    cgoplot,etime,wdir2,color='green',psym=16,symsize=0.5
    cgoplot,etime,wdir3,color='blue',psym=16,symsize=0.5 
-   cgplot,etime, tgs,ytitle='GroundSpeed, TAS(red)',yr=[0,50],xtitle='Elapsed Time (s)',/xstyle
+   cgplot,etime, tgs,ytitle='GroundSpeed, TAS(red)',yr=[0,150],xtitle='Elapsed Time (s)',/xstyle
    cgoplot,etime,tas,color='red'
 
    window,4,xsize=900,ysize=800
@@ -229,5 +244,5 @@ ENDIF
 return,{time:time, mean_wind:mean_wind, mean_heading:mean_heading, mean_course:mean_course, corr:corr, udl:udl, vdl:vdl, up:up, vp:vp, $
           course:course, truehead:psi*180/!pi, udl_all:up[good] * uwind3_sm[good], vdl_all:vp[good] * vwind3_sm[good],$
             tas:tas, tgs:tgs, wspd:wspd, wdir:wdir, wind_std:wind_std, wdir_std:wdir_std, lat:lat, lon:lon, uwind:uwind, vwind:vwind, $
-            aoa:fin.aoa_deg, ss:fin.x24v_monitor, extra:extra, fin:fin, gps:gps}
+            aoa:fin.aoa_deg, ss:fin.x24v_monitor, extra:extra, fin:fin, gps:gps, cwip:cwip}
 END
