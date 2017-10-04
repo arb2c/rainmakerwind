@@ -44,7 +44,8 @@ FUNCTION read_rainmaker, fn, id, units=units
          v[0]=sfm
          v[1]=0.0
          ;IF checksum eq 1 THEN v[-1]=checkval
-         all[i,*]=v[0:n_elements(units)-1]
+         num2stuff=n_elements(units) < n_elements(v)  ;Had to do this since some files don't have trailing commas for empty fields, giving wrong count
+         all[i,0:num2stuff-1]=v[0:num2stuff-1]
          i=i+1
       ENDIF
    ENDREP UNTIL eof(1)

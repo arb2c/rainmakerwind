@@ -61,10 +61,24 @@ for i=-35,-15 do begin &  x=analyze_fin2(12,-1+i/10.0,/noplot,pitot=1.05) & prin
 
 ;=====================================================================
 ;Flight 13 09/12/2017 Albatross test flight with Don Lenschow, looking at SS and AoA here
-a=1000 & b=10000
+a=2000 & b=7000      ;SS and AoA maneuvers started around 7200, ignore those
 ;Find pitot adjustment minimum, best= 1.15,
 for i=13,19 do begin &  x=analyze_fin2(13,0,/noplot,pitot=1+i/100.0) & print,1+i/100.0,stddev(x.wspd[a:b]) & endfor
 
 ;Find heading adjustment minimum, best=0
-for i=-4,4 do begin &  x=analyze_fin2(13,i,/noplot,pitot=1.15) & print,i,stddev(x.wspd[2000:8000]) & endfor
+for i=-4,4 do begin &  x=analyze_fin2(13,i,/noplot,pitot=1.15) & print,i,stddev(x.wspd[a:b]) & endfor
+
+;------------------------
+;Bill made some adjustments to SS and AoA and sent a new file.  Try that here and see if it makes a difference.
+a=2000 & b=7000      ;This file has a lot of bad data... I manually trimmed it to match the 'short' version above
+;Find pitot adjustment minimum, best= 1.09,
+for i=8,12 do begin &  x=analyze_fin2(14,0,/noplot,pitot=1+i/100.0) & print,1+i/100.0,stddev(x.wspd[a:b],/nan) & endfor
+
+;Find heading adjustment minimum, best=-1
+for i=-4,4 do begin &  x=analyze_fin2(14,i,/noplot,pitot=1.09) & print,i,stddev(x.wspd[a:b]) & endfor
+
+
+
+
+
 

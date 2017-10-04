@@ -23,6 +23,7 @@ IF n_elements(fin) eq 0 THEN BEGIN  ;Line to avoid re-reading if data already ex
       11:fn='CWIP-R03_20170706101755.csv'
       12:fn='CWIP-R03_20170708180157.csv'
       13:fn='short.csv'
+      14:fn='short_reprocessed-1.csv'
    ENDCASE
 
    fin=read_rainmaker(fn, 'fin', units=finunits)
@@ -104,8 +105,8 @@ tas= sqrt(tas_sq)             ; * tas_correct
 
 ;Compute wind, use RainMaker calculations of aircraft attitude first
 time=fin.time
-alpha=fin.aoa_deg * !pi/180   ;attack
-beta=fin.x24v_monitor * !pi/180  ;sideslip, 8V is pressure, 24V is degrees
+alpha=-fin.aoa_deg * !pi/180   ;attack, changed to negative sign convention based on comparison of flight 14
+beta=fin.x24v_monitor * !pi/180  ;sideslip, 8V is pressure, 24V is degrees.  Sign looks correct based on flight 14
 ;Data from AHRS is at a higher rate, need to downsample with interpolation
 theta=extra.pitch * !pi/180   ;pitch
 phi=extra.roll * !pi/180  ;roll
@@ -183,7 +184,7 @@ bad=where(wdir3 lt 0, nbad)       ;Get range to 0:360, rather than -180:180
 IF nbad gt 0 THEN wdir3[bad] = wdir3[bad]+360
 
 etime=time-time[0]  ;elapsed time
-
+print,min(time),max(time)
 ;stop
 IF noplot eq 0 THEN BEGIN
    ;Compare to RainMaker wind  ** matches pretty well
@@ -226,12 +227,12 @@ IF noplot eq 0 THEN BEGIN
    window,3,xsize=900,ysize=800
    !p.multi=[0,1,3,0,0]
    !p.charsize=3
-   cgplot,etime,wspd,ytitle='Wind Speed (m/s)',xtitle='Elapsed Time (s)',color='red',yr=[0,25],/xstyle
-   cgoplot,etime,wspd2,color='green'
-   cgoplot,etime,wspd3,color='blue'
+   cgplot,etime,wspd,ytitle='Wind Speed (m/s)',xtitle='Elapsed Time (s)',color='red',yr=[0,15],/xstyle
+   ;cgoplot,etime,wspd2,color='green'
+   ;cgoplot,etime,wspd3,color='blue'
    cgplot,etime,wdir,ytitle='Wind Direction (deg)',psym=16,symsize=0.5,xtitle='Elapsed Time (s)',color='red',/xstyle
-   cgoplot,etime,wdir2,color='green',psym=16,symsize=0.5
-   cgoplot,etime,wdir3,color='blue',psym=16,symsize=0.5 
+   ;cgoplot,etime,wdir2,color='green',psym=16,symsize=0.5
+   ;cgoplot,etime,wdir3,color='blue',psym=16,symsize=0.5 
    cgplot,etime, tgs,ytitle='GroundSpeed, TAS(red)',yr=[0,150],xtitle='Elapsed Time (s)',/xstyle
    cgoplot,etime,tas,color='red'
 
