@@ -22,6 +22,7 @@ IF n_elements(fin) eq 0 THEN BEGIN  ;Line to avoid re-reading if data already ex
       10:fn='CWIP-R03_20170613095324.csv'
       11:fn='CWIP-R03_20170706101755.csv'
       12:fn='CWIP-R03_20170708180157.csv'
+      13:fn='short.csv'
    ENDCASE
 
    fin=read_rainmaker(fn, 'fin', units=finunits)
@@ -48,11 +49,12 @@ IF n_elements(fin) eq 0 THEN BEGIN  ;Line to avoid re-reading if data already ex
       minus=where(dyaw lt -200)
       for i=0,n_elements(plus)-1 do yaw[plus[i]+1:*]=yaw[plus[i]+1:*]-360
       for i=0,n_elements(minus)-1 do yaw[minus[i]+1:*]=yaw[minus[i]+1:*]+360
-      
+
       
       ;Create an 'extra' array, just to get all this mess interpolated to the same time as 'fin'
       extra={time:fin.time, $
          heading:interpol(yaw, vn300.time, fin.time),$
+         psi:interpol(yaw+psi_correct, vn300.time, fin.time),$
          pitch:interpol(vn300.pitch, vn300.time, fin.time),$
          roll:interpol(vn300.roll, vn300.time, fin.time),$
          lat:interpol(vn300.lat, vn300.time, fin.time),$
@@ -109,7 +111,7 @@ theta=extra.pitch * !pi/180   ;pitch
 phi=extra.roll * !pi/180  ;roll
 
 
-psi=(extra.heading+psi_correct) * !pi/180   ;true heading
+psi=extra.psi * !pi/180 ;(extra.heading+psi_correct) * !pi/180   ;true heading
 utas=tas*sin(psi)
 vtas=tas*cos(psi)
 lat=extra.lat
@@ -170,7 +172,7 @@ bad=where(wdir2 lt 0, nbad)       ;Get range to 0:360, rather than -180:180
 IF nbad gt 0 THEN wdir2[bad] = wdir2[bad]+360
  
 ;My own simple derivation, using difference between tas and groundspeed
-psi=(extra.heading+psi_correct) * !pi/180   ;true heading
+psi=extra.psi * !pi/180   ;psi=(extra.heading+psi_correct) * !pi/180   ;true heading
 utas=tas*sin(psi)
 vtas=tas*cos(psi)
 uwind3_sm = smooth(up-utas,5,nan=nan)
@@ -243,6 +245,6 @@ ENDIF
 
 return,{time:time, mean_wind:mean_wind, mean_heading:mean_heading, mean_course:mean_course, corr:corr, udl:udl, vdl:vdl, up:up, vp:vp, $
           course:course, truehead:psi*180/!pi, udl_all:up[good] * uwind3_sm[good], vdl_all:vp[good] * vwind3_sm[good],$
-            tas:tas, tgs:tgs, wspd:wspd, wdir:wdir, wind_std:wind_std, wdir_std:wdir_std, lat:lat, lon:lon, uwind:uwind, vwind:vwind, $
+            tas:tas, tgs:tgs, wspd:wspd, wdir:wdir, wspd3:wspd3, wdir3:wdir3, wind_std:wind_std, wdir_std:wdir_std, lat:lat, lon:lon, uwind:uwind, vwind:vwind, $
             aoa:fin.aoa_deg, ss:fin.x24v_monitor, extra:extra, fin:fin, gps:gps, cwip:cwip}
 END

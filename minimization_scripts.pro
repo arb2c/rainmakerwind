@@ -59,4 +59,12 @@ for i=0,15 do begin &  x=analyze_fin2(12,-3.5,/noplot,pitot=1+i/100.0) & print,1
 ;Getting best adjustment at large value of -3.5 degrees
 for i=-35,-15 do begin &  x=analyze_fin2(12,-1+i/10.0,/noplot,pitot=1.05) & print,-1+i/10.0,stddev(x.wspd[a:b]) & endfor
 
+;=====================================================================
+;Flight 13 09/12/2017 Albatross test flight with Don Lenschow, looking at SS and AoA here
+a=1000 & b=10000
+;Find pitot adjustment minimum, best= 1.15,
+for i=13,19 do begin &  x=analyze_fin2(13,0,/noplot,pitot=1+i/100.0) & print,1+i/100.0,stddev(x.wspd[a:b]) & endfor
+
+;Find heading adjustment minimum, best=0
+for i=-4,4 do begin &  x=analyze_fin2(13,i,/noplot,pitot=1.15) & print,i,stddev(x.wspd[2000:8000]) & endfor
 
