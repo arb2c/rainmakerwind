@@ -1,11 +1,15 @@
-function analyze_fin2, flight, psi_correct, fin, ahrs, wind, noplot=noplot, pitot_correct=pitot_correct
+function analyze_fin2, flight, psi_correct, fin, ahrs, wind, noplot=noplot, pitot_correct=pitot_correct, s_alpha=s_alpha, i_alpha=i_alpha, aoa_factor=aoa_factor, aoa_offset=aoa_offset
 ;This version reads data straight from the RainmakerData files
 
 IF n_elements(flight) eq 0 THEN flight=3
 IF n_elements(psi_correct) eq 0 THEN psi_correct=0  ;test a correction, degrees
 IF n_elements(pitot_correct) eq 0 THEN pitot_correct=1.0  ;pitot correction, mulitplication factor
 IF n_elements(noplot) eq 0 THEN noplot=0
+IF n_elements(s_alpha) eq 0 THEN s_alpha=1.0  ;AoA correction coefficients
+IF n_elements(i_alpha) eq 0 THEN i_alpha=0.0
 IF !version.release ge 8 THEN nan=1 ELSE nan=0  ;Workaround since GDL doesn't do NaN in smooth operation
+IF n_elements(aoa_factor) eq 0 THEN aoa_factor=1.0
+IF n_elements(aoa_offset) eq 0 THEN aoa_offset=0.0
 
 ;Read in data
 IF n_elements(fin) eq 0 THEN BEGIN  ;Line to avoid re-reading if data already exists
@@ -21,9 +25,11 @@ IF n_elements(fin) eq 0 THEN BEGIN  ;Line to avoid re-reading if data already ex
       9:fn='CWIP-R03_20170605150952.csv'
       10:fn='CWIP-R03_20170613095324.csv'
       11:fn='CWIP-R03_20170706101755.csv'
-      12:fn='CWIP-R03_20170708180157.csv'
+      12:fn='/home/bansemer/RainDynamics/CWIP-R03_20170708180157.csv'
       13:fn='short.csv'
       14:fn='short_reprocessed-1.csv'
+      15:fn='/home/bansemer/RainDynamics/2018/CWIP-01_070, Tangshan, Hebei Rebuild/Reprocessed/CWIP-R03_20181121135024.csv'
+      16:fn='/home/bansemer/RainDynamics/2018/CWIP-05_066, WMI C-90 to India, 2018/2018_10_14, post project cal flight/CWIP-R03_20181014060251.csv'
    ENDCASE
 
    fin=read_rainmaker(fn, 'fin', units=finunits)
@@ -105,7 +111,8 @@ tas= sqrt(tas_sq)             ; * tas_correct
 
 ;Compute wind, use RainMaker calculations of aircraft attitude first
 time=fin.time
-alpha=-fin.aoa_deg * !pi/180   ;attack, changed to negative sign convention based on comparison of flight 14
+alpha=aoa_factor*(fin.aoa_deg+aoa_offset) * !pi/180   ;attack, changed to negative sign convention based on comparison of flight 14
+alpha_corrected=s_alpha * fin.attackdpmb/ps + i_alpha  ;Khelif Eq. 8
 beta=fin.x24v_monitor * !pi/180  ;sideslip, 8V is pressure, 24V is degrees.  Sign looks correct based on flight 14
 ;Data from AHRS is at a higher rate, need to downsample with interpolation
 theta=extra.pitch * !pi/180   ;pitch
@@ -117,6 +124,7 @@ utas=tas*sin(psi)
 vtas=tas*cos(psi)
 lat=extra.lat
 lon=extra.lon
+alt=extra.alt
 gpstime=extra.time
 
 ;From Khelif eq. 4 and 5
@@ -128,14 +136,21 @@ thetadot=(theta[1:*]-theta)/dt
 mpd=111325.0  ;m per degree latitude at equator
 up=mpd*(lon[1:*]-lon)/dt * cos(lat*!pi/180) 
 vp=mpd*(lat[1:*]-lat)/dt
+wp=(alt[1:*]-alt)/dt
 
 IF vn300.ioerror eq 0 THEN BEGIN
    print,'***UP and VP override until GPS is fixed ***'
    upold=up
    vpold=vp
-   ;NOTE up and vp are backwards in the VN300 data
-   vp=extra.velx
-   up=extra.vely
+   ;NOTE up and vp are backwards in the VN300 data up until Flight 14
+   IF flight le 14 THEN BEGIN
+      vp=extra.velx
+      up=extra.vely
+   ENDIF ELSE BEGIN
+      up=extra.velx
+      vp=extra.vely      
+   ENDELSE
+   
 ENDIF
 
 
@@ -150,10 +165,12 @@ tgs=sqrt(up^2+vp^2)   ;Ground speed
 uwind = up - tas*d * (sin(psi)*cos(theta) + tan(beta)*(cos(psi)*cos(phi) + sin(psi)*sin(theta)*sin(phi)) + $
          tan(alpha)*(sin(psi)*sin(theta)*cos(phi) - cos(psi)*sin(phi))) - $
          ell*(thetadot*sin(theta)*sin(psi)-psidot*cos(psi)*cos(theta))
-vwind = vp -tas*d * (cos(psi)*cos(theta) + tan(beta)*(sin(psi)*cos(phi) - cos(psi)*sin(theta)*sin(phi)) + $
+vwind = vp - tas*d * (cos(psi)*cos(theta) + tan(beta)*(sin(psi)*cos(phi) - cos(psi)*sin(theta)*sin(phi)) + $
          tan(alpha)*(cos(psi)*sin(theta)*cos(phi) - sin(psi)*sin(phi))) - $
          ell*(psidot*sin(psi)*cos(theta) + thetadot*cos(psi)*sin(theta))
-
+wwind = wp - tas*d *(sin(theta) - tan(beta)*cos(theta)*sin(phi) - tan(alpha)*cos(theta)*cos(phi)) + $
+         ell*thetadot*cos(theta)
+         
 ;Calculate using the simple approximations in TechNote eq 2.11
 uwind2 = up - tas*sin(psi+beta)
 vwind2 = vp - tas*cos(psi+beta)
@@ -244,8 +261,8 @@ IF noplot eq 0 THEN BEGIN
    cgoplot,etime,course,psym=16,symsize=0.5
 ENDIF
 
-return,{time:time, mean_wind:mean_wind, mean_heading:mean_heading, mean_course:mean_course, corr:corr, udl:udl, vdl:vdl, up:up, vp:vp, $
-          course:course, truehead:psi*180/!pi, udl_all:up[good] * uwind3_sm[good], vdl_all:vp[good] * vwind3_sm[good],$
-            tas:tas, tgs:tgs, wspd:wspd, wdir:wdir, wspd3:wspd3, wdir3:wdir3, wind_std:wind_std, wdir_std:wdir_std, lat:lat, lon:lon, uwind:uwind, vwind:vwind, $
-            aoa:fin.aoa_deg, ss:fin.x24v_monitor, extra:extra, fin:fin, gps:gps, cwip:cwip}
+return,{time:time, mean_wind:mean_wind, mean_heading:mean_heading, mean_course:mean_course, corr:corr, udl:udl, vdl:vdl, up:up, vp:vp, wp:wp,$
+        course:course, truehead:psi*180/!pi, udl_all:up[good] * uwind3_sm[good], vdl_all:vp[good] * vwind3_sm[good],$
+        tas:tas, tgs:tgs, wspd:wspd, wdir:wdir, wspd3:wspd3, wdir3:wdir3, wind_std:wind_std, wdir_std:wdir_std, lat:lat, lon:lon, uwind:uwind, vwind:vwind, $
+        wwind:wwind, aoa:fin.aoa_deg, ss:fin.x24v_monitor, extra:extra, fin:fin, gps:gps, cwip:cwip}
 END

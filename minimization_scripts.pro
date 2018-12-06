@@ -77,6 +77,25 @@ for i=8,12 do begin &  x=analyze_fin2(14,0,/noplot,pitot=1+i/100.0) & print,1+i/
 ;Find heading adjustment minimum, best=-1
 for i=-4,4 do begin &  x=analyze_fin2(14,i,/noplot,pitot=1.09) & print,i,stddev(x.wspd[a:b]) & endfor
 
+;=====================================================================
+;Flight 15 11/21/2018 Hebei test case from Bill.  Java miminization tool not working for this.
+;**Seems that AoA or SS is messing everything up.  Using wspd3 here instead, which does not consider those and works much better.
+a=5500 & b=7000      
+;Find pitot adjustment minimum, having trouble with this flight, best 1.09
+for i=8,12 do begin &  x=analyze_fin2(15,0.3,/noplot,pitot=1+i/100.0) & print,1+i/100.0,stddev(x.wspd3[a:b]) & endfor
+
+;Find heading adjustment minimum, best 0.3
+for i=-0.5,0.5,0.1 do begin &  x=analyze_fin2(15,i,/noplot,pitot=1.09) & print,i,stddev(x.wspd3[a:b]) & endfor
+
+;=====================================================================
+;Flight 16 10/14/2018 India cal flight.  Java miminization tool not working for this.
+;**Seems that AoA or SS is messing everything up.  Using wspd3 here instead, which does not consider those and works much better.
+a=3700 & b=4700      
+;Find pitot adjustment minimum, best 0.89
+for i=0,15 do begin &  x=analyze_fin2(16,0.8,/noplot,pitot=1+i/100.0) & print,1+i/100.0,stddev(x.wspd3[a:b]) & endfor
+
+;Find heading adjustment minimum, best 0.8
+for i=0.5,1.5,0.1 do begin &  x=analyze_fin2(16,i,/noplot,pitot=0.89) & print,i,stddev(x.wspd3[a:b]) & endfor
 
 
 
