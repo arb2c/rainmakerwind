@@ -1,4 +1,5 @@
-function analyze_fin2, flight, psi_correct, fin, ahrs, wind, noplot=noplot, pitot_correct=pitot_correct, s_alpha=s_alpha, i_alpha=i_alpha, aoa_factor=aoa_factor, aoa_offset=aoa_offset
+function analyze_fin2, flight, psi_correct, fin, ahrs, wind, noplot=noplot, pitot_correct=pitot_correct, s_alpha=s_alpha,$
+     i_alpha=i_alpha, aoa_factor=aoa_factor, aoa_offset=aoa_offset, ss_factor=ss_factor, ss_offset=ss_offset
 ;This version reads data straight from the RainmakerData files
 
 IF n_elements(flight) eq 0 THEN flight=3
@@ -10,6 +11,8 @@ IF n_elements(i_alpha) eq 0 THEN i_alpha=0.0
 IF !version.release ge 8 THEN nan=1 ELSE nan=0  ;Workaround since GDL doesn't do NaN in smooth operation
 IF n_elements(aoa_factor) eq 0 THEN aoa_factor=1.0
 IF n_elements(aoa_offset) eq 0 THEN aoa_offset=0.0
+IF n_elements(ss_factor) eq 0 THEN ss_factor=1.0
+IF n_elements(ss_offset) eq 0 THEN ss_offset=0.0
 
 ;Read in data
 IF n_elements(fin) eq 0 THEN BEGIN  ;Line to avoid re-reading if data already exists
@@ -113,7 +116,7 @@ tas= sqrt(tas_sq)             ; * tas_correct
 time=fin.time
 alpha=aoa_factor*(fin.aoa_deg+aoa_offset) * !pi/180   ;attack, changed to negative sign convention based on comparison of flight 14
 alpha_corrected=s_alpha * fin.attackdpmb/ps + i_alpha  ;Khelif Eq. 8
-beta=fin.x24v_monitor * !pi/180  ;sideslip, 8V is pressure, 24V is degrees.  Sign looks correct based on flight 14
+beta=ss_factor * fin.x24v_monitor * !pi/180  ;sideslip, 8V is pressure, 24V is degrees.  Sign looks correct based on flight 14
 ;Data from AHRS is at a higher rate, need to downsample with interpolation
 theta=extra.pitch * !pi/180   ;pitch
 phi=extra.roll * !pi/180  ;roll
@@ -210,8 +213,8 @@ IF noplot eq 0 THEN BEGIN
    window,2,xsize=900,ysize=800
    etime_hires=fin.time-fin.time[0]
    cgplot,etime,wspd,ytitle='Wind Speed (m/s)',xtitle='Elapsed Time (s)',/xstyle,yr=[0,25]  ;Had wind.wspd here, but no longer computed
-   cgoplot,etime,wspd,color='red'
-   cgoplot,etime,wspd2,color='green'
+   cgoplot,etime,wspd,color='red',thick=3
+   cgoplot,etime,wspd2,color='green',thick=2
    cgoplot,etime,wspd3,color='blue'
 
    cgplot,etime,wdir,ytitle='Wind Direction (deg)',psym=16,symsize=0.5,xtitle='Elapsed Time (s)',/xstyle
